@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Adiciona os listeners para os filtros
+    // Adiciona os listeners para os filtros.
     [filterParticipante, filterImagem, filterCategoria, filterBloco].forEach(filter => {
         filter.addEventListener('change', displayResults);
     });

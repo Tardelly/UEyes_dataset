@@ -53,7 +53,7 @@ def executar_analise_completa(parametros_busca):
         print("Aguardando 2 segundos para evitar limite de requisições...")
         time.sleep(2) 
     
-    # Chamando a função renomeada com a lista de resultados completos
+    # Chamando a função renomeada com a lista de resultados completos.
     salvar_relatorio_jsonl(lista_de_resultados)
 
 

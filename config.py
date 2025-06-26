@@ -2,7 +2,7 @@
 import os
 
 # --- Caminhos Base ---
-# Pega o caminho do diretório onde o script está sendo executado
+# Pega o caminho do diretório onde o script está sendo executado.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # --- Caminhos dos Dados ---

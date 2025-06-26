@@ -35,7 +35,7 @@ def main(args):
                 print(f"\nProcessando dados de '{log_filename}' para a mídia '{media_name}'...")
                 log_file_found = True
                 
-                # Define os nomes dos arquivos de saída
+                # Define os nomes dos arquivos de saída.
                 base_output_name = f"{media_name.split('.')[0]}_P{participante.zfill(2)}"
                 heatmap_output_path = os.path.join(OUTPUT_VIS_DIR, f"heatmap_{base_output_name}.png")
                 scanpath_output_path = os.path.join(OUTPUT_VIS_DIR, f"scanpath_{base_output_name}.png")
