@@ -63,7 +63,7 @@ if __name__ == "__main__":
     
     parametros = {
         "participante": None,
-        "media_name": "1a27f3.png", 
+        "media_name": "cd9e29.jpg", 
         "tipo_de_midia": None
     }
     
