@@ -8,6 +8,6 @@ __pycache__/
 *.pyc
 *.csv#
 saliency_maps/
-eyetracker_logs/
+#eyetracker_logs/
 scanpaths/
 images/ 
