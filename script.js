@@ -112,69 +112,103 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Gera os gráficos interativos para um cartão de relatório
-    async function generateVisualizations(report, containerId) {
-        const fixations = await getFixationData(report);
-        if (fixations.length === 0) return;
+    // ... (resto do seu script.js) ...
 
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        // Heatmap
+// ... (resto do seu script.js) ...
+
+// Gera os gráficos interativos para um cartão de relatório
+async function generateVisualizations(report, containerId) {
+    const fixations = await getFixationData(report);
+    if (fixations.length === 0) return;
+
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    // --- LÓGICA DO HEATMAP DENTRO DE requestAnimationFrame ---
+    requestAnimationFrame(() => {
+        // Neste ponto, o navegador está prestes a renderizar, então as dimensões devem estar disponíveis.
+        // Adicionamos uma verificação extra para garantir.
+        if (container.clientWidth === 0 || container.clientHeight === 0) {
+            console.warn("O contêiner do heatmap ainda tem dimensões 0. O heatmap não será gerado para:", containerId);
+            return;
+        }
+
         const heatmapContainer = document.createElement('div');
         heatmapContainer.className = 'heatmap-container';
         container.appendChild(heatmapContainer);
-        const heatmapInstance = h337.create({ container: heatmapContainer, radius: 25, maxOpacity: .6 });
+        
+        const heatmapConfig = {
+            container: heatmapContainer,
+            radius: 25,
+            maxOpacity: .6,
+            width: container.clientWidth,
+            height: container.clientHeight
+        };
+
+        const heatmapInstance = h337.create(heatmapConfig);
+        
         const points = fixations.map(f => ({
             x: Math.round(parseFloat(f.FPOGX) * container.clientWidth),
             y: Math.round(parseFloat(f.FPOGY) * container.clientHeight),
             value: 1
         }));
         heatmapInstance.setData({ max: 5, data: points });
+    });
 
-        // Scanpath
-        const canvas = document.createElement('canvas');
-        container.appendChild(canvas);
-        const ctx = canvas.getContext('2d');
-        const resizeCanvas = () => {
+    // --- LÓGICA DO SCANPATH (pode continuar como estava, mas envolvê-la também é seguro) ---
+    const canvas = document.createElement('canvas');
+    container.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    
+    const resizeCanvas = () => {
+        // Garante que o container tenha dimensões antes de desenhar
+        if (container.clientWidth > 0 && container.clientHeight > 0) {
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
             drawScanpath();
-        };
+        }
+    };
 
-        const drawScanpath = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpa o canvas
-            const radius = 8;
-            const coords = fixations.map(f => ({
-                x: parseFloat(f.FPOGX) * canvas.width,
-                y: parseFloat(f.FPOGY) * canvas.height
-            }));
-            
+    const drawScanpath = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const radius = 8;
+        const coords = fixations.map(f => ({
+            x: parseFloat(f.FPOGX) * canvas.width,
+            y: parseFloat(f.FPOGY) * canvas.height
+        }));
+        
+        if (coords.length === 0) return;
+
+        ctx.beginPath();
+        ctx.moveTo(coords[0].x, coords[0].y);
+        coords.slice(1).forEach(c => ctx.lineTo(c.x, c.y));
+        ctx.strokeStyle = 'rgba(66, 135, 245, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        coords.forEach((c, i) => {
             ctx.beginPath();
-            ctx.moveTo(coords[0].x, coords[0].y);
-            coords.slice(1).forEach(c => ctx.lineTo(c.x, c.y));
-            ctx.strokeStyle = 'rgba(66, 135, 245, 0.7)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            ctx.arc(c.x, c.y, radius, 0, 2 * Math.PI);
+            if (i === 0) ctx.fillStyle = 'rgba(46, 204, 113, 1)';
+            else if (i === coords.length - 1) ctx.fillStyle = 'rgba(231, 76, 60, 1)';
+            else ctx.fillStyle = 'rgba(52, 152, 219, 1)';
+            ctx.fill();
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(i + 1, c.x, c.y);
+        });
+    };
+    
+    // Usar ResizeObserver continua sendo uma ótima prática para o scanpath
+    new ResizeObserver(resizeCanvas).observe(container);
+    // Chamada inicial
+    requestAnimationFrame(resizeCanvas);
+}
 
-            coords.forEach((c, i) => {
-                ctx.beginPath();
-                ctx.arc(c.x, c.y, radius, 0, 2 * Math.PI);
-                if (i === 0) ctx.fillStyle = 'rgba(46, 204, 113, 1)';
-                else if (i === coords.length - 1) ctx.fillStyle = 'rgba(231, 76, 60, 1)';
-                else ctx.fillStyle = 'rgba(52, 152, 219, 1)';
-                ctx.fill();
-                
-                ctx.fillStyle = 'white';
-                ctx.font = 'bold 10px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(i + 1, c.x, c.y);
-            });
-        };
-        // Redesenha quando a janela muda de tamanho
-        new ResizeObserver(resizeCanvas).observe(container);
-        resizeCanvas();
-    }
+// ... (resto do seu script.js) ...
     
     // Adiciona os listeners aos filtros
     [filterParticipante, filterImagem, filterCategoria, filterBloco].forEach(f => f.addEventListener('change', displayResults));
