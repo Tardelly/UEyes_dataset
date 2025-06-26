@@ -1,0 +1,14 @@
+# Ignorar arquivos e pastas comuns
+__pycache__/
+.env
+.venv/
+.vscode/
+.DS_Store
+*.csv
+*.pyc
+*.csv#
+saliency_maps/
+eyetracker_logs/
+reports/
+scanpaths/
+images/ 
