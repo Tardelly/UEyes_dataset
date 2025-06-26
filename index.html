@@ -9,22 +9,23 @@
 </head>
 <body>
     <header>
-        <h1>Dashboard de Análise de Rastreamento Ocular AI.</h1>
+        <h1>Dashboard de Análise de Rastreamento Ocular</h1>
+        <p>Resultados gerados em: 26 de junho de 2025</p>
     </header>
 
     <main>
         <div class="filters-container">
             <h2>Filtros</h2>
-            <select id="filter-participante">
+            <select id="filter-participante" class="filter-select">
                 <option value="all">Todos os Participantes</option>
             </select>
-            <select id="filter-imagem">
+            <select id="filter-imagem" class="filter-select">
                 <option value="all">Todas as Imagens</option>
             </select>
-            <select id="filter-categoria">
+            <select id="filter-categoria" class="filter-select">
                 <option value="all">Todas as Categorias</option>
             </select>
-            <select id="filter-bloco">
+            <select id="filter-bloco" class="filter-select">
                 <option value="all">Todos os Blocos</option>
             </select>
             <button id="reset-filters">Limpar Filtros</button>
@@ -34,6 +35,10 @@
         <div id="results-container">
             </div>
     </main>
+
+    <footer>
+        <p>Projeto de Análise de Dados de Eye Tracking</p>
+    </footer>
 
     <script src="script.js"></script>
 </body>

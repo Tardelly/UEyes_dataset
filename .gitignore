@@ -9,6 +9,5 @@ __pycache__/
 *.csv#
 saliency_maps/
 eyetracker_logs/
-reports/
 scanpaths/
 images/ 

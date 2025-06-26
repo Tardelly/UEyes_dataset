@@ -3,5 +3,5 @@ google-generativeai
 python-dotenv
 Pillow
 fpdf2
-matplotlib
 seaborn
+matplotlib
