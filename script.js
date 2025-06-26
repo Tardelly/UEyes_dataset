@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
     // Referências aos elementos da página
     const filterParticipante = document.getElementById('filter-participante');
@@ -111,106 +112,113 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Gera os gráficos interativos para um cartão de relatório
-    // ... (resto do seu script.js) ...
-
-// ... (resto do seu script.js) ...
-
-// Gera os gráficos interativos para um cartão de relatório
 async function generateVisualizations(report, containerId) {
     const fixations = await getFixationData(report);
     if (fixations.length === 0) return;
 
     const container = document.getElementById(containerId);
     if (!container) return;
-    
-    // --- LÓGICA DO HEATMAP DENTRO DE requestAnimationFrame ---
-    requestAnimationFrame(() => {
-        // Neste ponto, o navegador está prestes a renderizar, então as dimensões devem estar disponíveis.
-        // Adicionamos uma verificação extra para garantir.
-        if (container.clientWidth === 0 || container.clientHeight === 0) {
-            console.warn("O contêiner do heatmap ainda tem dimensões 0. O heatmap não será gerado para:", containerId);
-            return;
-        }
 
-        const heatmapContainer = document.createElement('div');
-        heatmapContainer.className = 'heatmap-container';
-        container.appendChild(heatmapContainer);
-        
-        const heatmapConfig = {
-            container: heatmapContainer,
-            radius: 25,
-            maxOpacity: .6,
-            width: container.clientWidth,
-            height: container.clientHeight
-        };
+    // --- CRIAÇÃO DOS CONTROLES (CHECKBOXES) ---
+    const controlsContainer = document.createElement('div');
+    controlsContainer.className = 'layer-controls';
+    controlsContainer.innerHTML = `
+        <label><input type="checkbox" class="layer-toggle" data-layer="heatmap" checked> Heatmap</label>
+        <label><input type="checkbox" class="layer-toggle" data-layer="scanpath" checked> Scanpath</label>
+    `;
+    const visualsContainer = container.closest('.visuals-container');
+    visualsContainer.appendChild(controlsContainer);
 
-        const heatmapInstance = h337.create(heatmapConfig);
-        
-        const points = fixations.map(f => ({
-            x: Math.round(parseFloat(f.FPOGX) * container.clientWidth),
-            y: Math.round(parseFloat(f.FPOGY) * container.clientHeight),
-            value: 1
-        }));
-        heatmapInstance.setData({ max: 5, data: points });
-    });
-
-    // --- LÓGICA DO SCANPATH (pode continuar como estava, mas envolvê-la também é seguro) ---
+    // --- CRIAÇÃO DO CANVAS ÚNICO PARA AMBOS OS GRÁFICOS ---
     const canvas = document.createElement('canvas');
+    canvas.className = 'scanpath-canvas'; // Podemos reutilizar a classe CSS
     container.appendChild(canvas);
     const ctx = canvas.getContext('2d');
-    
-    const resizeCanvas = () => {
-        // Garante que o container tenha dimensões antes de desenhar
-        if (container.clientWidth > 0 && container.clientHeight > 0) {
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-            drawScanpath();
+
+    // --- FUNÇÃO CENTRAL DE REDESENHO ---
+    // Esta função será chamada sempre que uma camada for ligada/desligada
+    // ou quando a tela for redimensionada.
+    const redrawAll = () => {
+        if (container.clientWidth <= 0 || container.clientHeight <= 0) return;
+
+        // Ajusta o tamanho do canvas
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+
+        // Limpa tudo
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Verifica o estado dos checkboxes
+        const showHeatmap = controlsContainer.querySelector('[data-layer="heatmap"]').checked;
+        const showScanpath = controlsContainer.querySelector('[data-layer="scanpath"]').checked;
+
+        // 1. Desenha o Heatmap (se estiver ligado)
+        if (showHeatmap) {
+            // A SimpleHeat desenha diretamente no canvas que fornecemos
+            const heat = simpleheat(canvas); 
+            
+            // Converte os dados para o formato da SimpleHeat: [[x, y, value], ...]
+            const heatData = fixations.map(f => {
+                const x = parseFloat(f.FPOGX) * canvas.width;
+                const y = parseFloat(f.FPOGY) * canvas.height;
+                return [x, y, 1]; // [x, y, intensidade]
+            }).filter(p => !isNaN(p[0]) && !isNaN(p[1]));
+
+            heat.data(heatData); // Adiciona os dados
+            heat.max(3); // Define o máximo (ajuste se quiser mais ou menos intenso)
+            heat.radius(30, 20); // Raio do ponto de calor e raio do blur
+            heat.draw(); // Desenha no canvas
+        }
+
+        // 2. Desenha o Scanpath (se estiver ligado)
+        if (showScanpath) {
+            const radius = 8;
+            const coords = fixations.map(f => ({
+                x: parseFloat(f.FPOGX) * canvas.width,
+                y: parseFloat(f.FPOGY) * canvas.height
+            }));
+            
+            if (coords.length === 0) return;
+
+            // Desenha as linhas
+            ctx.beginPath();
+            ctx.moveTo(coords[0].x, coords[0].y);
+            coords.slice(1).forEach(c => ctx.lineTo(c.x, c.y));
+            ctx.strokeStyle = 'rgba(0, 0, 255, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Desenha os círculos e números
+            coords.forEach((c, i) => {
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, radius, 0, 2 * Math.PI);
+                if (i === 0) ctx.fillStyle = 'rgba(46, 204, 113, 1)';
+                else if (i === coords.length - 1) ctx.fillStyle = 'rgba(231, 76, 60, 1)';
+                else ctx.fillStyle = 'rgba(52, 152, 219, 1)';
+                ctx.fill();
+                
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(i + 1, c.x, c.y);
+            });
         }
     };
 
-    const drawScanpath = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const radius = 8;
-        const coords = fixations.map(f => ({
-            x: parseFloat(f.FPOGX) * canvas.width,
-            y: parseFloat(f.FPOGY) * canvas.height
-        }));
-        
-        if (coords.length === 0) return;
-
-        ctx.beginPath();
-        ctx.moveTo(coords[0].x, coords[0].y);
-        coords.slice(1).forEach(c => ctx.lineTo(c.x, c.y));
-        ctx.strokeStyle = 'rgba(66, 135, 245, 0.7)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        coords.forEach((c, i) => {
-            ctx.beginPath();
-            ctx.arc(c.x, c.y, radius, 0, 2 * Math.PI);
-            if (i === 0) ctx.fillStyle = 'rgba(46, 204, 113, 1)';
-            else if (i === coords.length - 1) ctx.fillStyle = 'rgba(231, 76, 60, 1)';
-            else ctx.fillStyle = 'rgba(52, 152, 219, 1)';
-            ctx.fill();
-            
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 10px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(i + 1, c.x, c.y);
-        });
-    };
-    
-    // Usar ResizeObserver continua sendo uma ótima prática para o scanpath
-    new ResizeObserver(resizeCanvas).observe(container);
-    // Chamada inicial
-    requestAnimationFrame(resizeCanvas);
+    // --- LISTENERS DE EVENTOS ---
+    // Redesenha tudo quando um checkbox muda
+    controlsContainer.addEventListener('change', redrawAll);
+    // Redesenha tudo quando o container muda de tamanho
+    new ResizeObserver(redrawAll).observe(container);
+    // Desenho inicial
+    requestAnimationFrame(redrawAll);
 }
 
-// ... (resto do seu script.js) ...
+
     
     // Adiciona os listeners aos filtros
+    
     [filterParticipante, filterImagem, filterCategoria, filterBloco].forEach(f => f.addEventListener('change', displayResults));
     resetBtn.addEventListener('click', () => {
         document.querySelectorAll('.filter-select').forEach(s => s.value = 'all');

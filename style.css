@@ -92,22 +92,48 @@ button:hover {
     background-color: #f8f9fa;
 }
 
+/* --- ÁREA DA CORREÇÃO --- */
+/* As regras a seguir controlam o empilhamento e a visibilidade das camadas */
+
+/* Camada Base: a imagem da interface (sem alteração) */
 .visualization-container img {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Garante que a imagem caiba sem distorcer */
+    object-fit: contain;
+    z-index: 1; 
 }
 
-.visualization-container canvas, .visualization-container .heatmap-container {
+/* Regra para a camada do heatmap E PARA O CANVAS DENTRO DELA */
+.visualization-container .heatmap-container,
+.visualization-container .heatmap-container canvas { /* Adicionamos o seletor para o canvas interno */
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    z-index: 2; 
 }
+
+/* Regra para a camada do scanpath (sem alteração) */
+.visualization-container .scanpath-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+}
+
+/* Regra para os pointer-events (agora separada para clareza) */
+.visualization-container .heatmap-container,
+.visualization-container .scanpath-canvas {
+    pointer-events: none;
+}
+/* --- FIM DA ÁREA DA CORREÇÃO --- */
+
 
 .report-text {
     white-space: pre-wrap;
@@ -117,4 +143,20 @@ button:hover {
     border: 1px solid var(--border-color);
     max-height: 450px; /* Altura máxima antes de mostrar a barra de rolagem */
     overflow-y: auto;
+}
+
+.layer-controls {
+    display: flex;
+    gap: 20px; /* Espaçamento entre os checkboxes */
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding-left: 5px;
+}
+
+.layer-controls label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
 }
